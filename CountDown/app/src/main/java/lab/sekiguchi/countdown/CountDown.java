@@ -7,8 +7,11 @@ import android.speech.tts.TextToSpeech;
 import android.view.MenuItem;
 import java.util.Locale;
 import android.view.View;
+import android.os.SystemClock;
 import android.widget.Button;
 import android.util.Log;
+import android.os.CountDownTimer;
+import android.widget.TextView;
 
 
 public class CountDown extends Activity implements View.OnClickListener, TextToSpeech.OnInitListener {
@@ -16,7 +19,16 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
     private TextToSpeech tts;
     private float pitch = 1.0f;
     private float rate = 1.0f;
-    private Button startBtn;
+    private Button startBtn, p10, m10;
+
+    MyCountDownTimer cdt;
+
+    TextView min;
+    TextView timer;
+
+    long time = 0;
+    long current = 0;
+    boolean work = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,8 +38,45 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
         startBtn = (Button)findViewById(R.id.start);
         startBtn.setOnClickListener(this);
 
+
+        p10 = (Button)findViewById(R.id.p10);
+        p10.setOnClickListener( new View.OnClickListener() {
+
+            public void onClick(View v) {
+                time += 10;
+                if(!work) {
+                    current = 1000 * time * 60;
+                }
+                draw();
+            }
+        });
+
+        m10 = (Button)findViewById(R.id.m10);
+        m10.setOnClickListener( new View.OnClickListener() {
+
+            public void onClick(View v) {
+                if(time > 0) {
+                    time -= 10;
+                }
+                if(!work) {
+                    current = 1000 * time * 60;
+                }
+                draw();
+            }
+        });
+
+
+        timer = (TextView)findViewById(R.id.timer);
+        min = (TextView)findViewById(R.id.time);
+
         // TTSのインスタンス生成
         tts = new TextToSpeech(this, this);
+        if(tts.setPitch(pitch) == TextToSpeech.ERROR) {
+            Log.e("TTS", "Ptich(" + pitch + ") set error.");
+        }
+        if(tts.setSpeechRate(rate) == TextToSpeech.ERROR) {
+            Log.e("TTS", "Speech rate(" + rate + ") set error.");
+        }
     }
 
     @Override
@@ -62,22 +111,61 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
     public void onClick(View v) {
         Log.d("TTS", "onClick");
         if(v == startBtn) {
-            if(tts != null) {
-                if(tts.setPitch(pitch) == TextToSpeech.ERROR) {
-                    Log.e("TTS", "Ptich(" + pitch + ") set error.");
+            if(time != 0) {
+                current = 1000 * time * 60;
+                this.speak("カウントダウンを開始します。残り"+ Long.toString(current / 1000 / 60) + "分です。");
+                if (cdt != null) {
+                    cdt.cancel();
                 }
-                if(tts.setSpeechRate(rate) == TextToSpeech.ERROR) {
-                    Log.e("TTS", "Speech rate(" + rate + ") set error.");
-                }
+                work = true;
 
-                if(tts.isSpeaking()) {
-                    // 読上げ中ならストップ
-                    tts.stop();
-                }
-
-                // テキスト読上げ
-                tts.speak("こんにちわ、世界！", TextToSpeech.QUEUE_FLUSH, null);
+                cdt = new MyCountDownTimer(60 * 1000 * time + 1000, 1000);
+                cdt.start();
             }
+        }
+    }
+
+
+    private void speak(String text) {
+
+        if(tts != null) {
+
+            if(tts.isSpeaking()) {
+                // 読上げ中ならストップ
+                tts.stop();
+            }
+            work = true;
+            // テキスト読上げ
+            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+        }
+    }
+
+    private void draw() {
+        {
+            min.setText(Long.toString(time));
+        }
+        {
+
+            String buf = new String();
+
+            long min = current/1000/60;
+            long sec = current/1000%60;
+            if(min < 10) {
+                buf += "00" + Long.toString(min);
+            } else if (min < 100) {
+                buf += "0" + Long.toString(min);
+            } else {
+                buf += "" + Long.toString(min);
+            }
+
+            buf += ":";
+            if(sec < 10) {
+                buf += "0" + Long.toString(sec);
+            } else {
+                buf += "" + Long.toString(sec);
+            }
+
+            timer.setText(buf);
         }
     }
 
@@ -93,6 +181,36 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
             }
         } else {
             Log.e("TTS", "Init error.");
+        }
+    }
+
+    public class MyCountDownTimer extends CountDownTimer {
+
+        public MyCountDownTimer(long millisInFuture, long countDownInterval) {
+            super(millisInFuture, countDownInterval);
+        }
+
+        @Override
+        public void onFinish() {
+            // カウントダウン完了後に呼ばれる
+
+            current = 0;
+            draw();
+            work = false;
+
+            speak("カウントダウンが終了しました。お疲れ様でした。");
+
+        }
+
+        @Override
+        public void onTick(long millisUntilFinished) {
+            // インターバル(countDownInterval)毎に呼ばれる
+            current = millisUntilFinished;
+
+            if((current % (1000 * 60 * 10)) == 0) {
+                speak("残り" + Long.toString(current / 1000 / 60) + "分です。");
+            }
+            draw();
         }
     }
 }

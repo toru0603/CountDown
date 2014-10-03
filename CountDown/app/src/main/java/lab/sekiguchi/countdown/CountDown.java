@@ -7,11 +7,12 @@ import android.speech.tts.TextToSpeech;
 import android.view.MenuItem;
 import java.util.Locale;
 import android.view.View;
-import android.os.SystemClock;
 import android.widget.Button;
 import android.util.Log;
 import android.os.CountDownTimer;
 import android.widget.TextView;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
 
 
 public class CountDown extends Activity implements View.OnClickListener, TextToSpeech.OnInitListener {
@@ -25,6 +26,7 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
 
     TextView min;
     TextView timer;
+    WakeLock lock;
 
     long time = 0;
     long current = 0;
@@ -77,6 +79,9 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
         if(tts.setSpeechRate(rate) == TextToSpeech.ERROR) {
             Log.e("TTS", "Speech rate(" + rate + ") set error.");
         }
+     //   PowerManager pm = (PowerManager)getSystemService(this.POWER_SERVICE);
+     //   lock = pm.newWakeLock(PowerManager.ON_AFTER_RELEASE, "My tag");
+     //   lock.acquire();
     }
 
     @Override
@@ -86,6 +91,7 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
             // リソースを解放
             tts.shutdown();
         }
+     //   lock.release();
     }
 
     @Override
@@ -207,7 +213,8 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
             // インターバル(countDownInterval)毎に呼ばれる
             current = millisUntilFinished;
 
-            if((current % (1000 * 60 * 10)) == 0) {
+            Log.d("TTS", "onTick " + Long.toString(current));
+            if((current % (1000 * 60 * 10)) < 500) {
                 speak("残り" + Long.toString(current / 1000 / 60) + "分です。");
             }
             draw();

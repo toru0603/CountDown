@@ -9,15 +9,12 @@
     android:keepScreenOn="true"
     tools:context=".CountDown">
 
-
-
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true">
-
 
         <LinearLayout
             android:orientation="horizontal"
@@ -70,7 +67,6 @@
                 android:layout_alignParentTop="true" />
         </LinearLayout>
 
-
         <TextView
             android:id="@+id/timer"
             android:layout_width="fill_parent"
@@ -79,7 +75,5 @@
             android:textSize="100dp"/>
 
     </LinearLayout>
-
-
 
 </RelativeLayout>

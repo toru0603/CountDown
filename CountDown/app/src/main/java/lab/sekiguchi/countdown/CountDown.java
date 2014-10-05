@@ -2,31 +2,26 @@ package lab.sekiguchi.countdown;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.Menu;
 import android.speech.tts.TextToSpeech;
-import android.view.MenuItem;
 import java.util.Locale;
 import android.view.View;
 import android.widget.Button;
 import android.util.Log;
 import android.os.CountDownTimer;
 import android.widget.TextView;
-import android.os.PowerManager;
-import android.os.PowerManager.WakeLock;
+import android.view.Window;
+
 
 
 public class CountDown extends Activity implements View.OnClickListener, TextToSpeech.OnInitListener {
 
     private TextToSpeech tts;
-    private float pitch = 1.0f;
-    private float rate = 1.0f;
-    private Button startBtn, p10, m10;
+    private Button startBtn, p10, p5, m5, m10;
 
     MyCountDownTimer cdt;
 
     TextView min;
     TextView timer;
-    WakeLock lock;
 
     long time = 0;
     long current = 0;
@@ -35,6 +30,7 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_count_down);
 
         startBtn = (Button)findViewById(R.id.start);
@@ -45,7 +41,37 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
         p10.setOnClickListener( new View.OnClickListener() {
 
             public void onClick(View v) {
-                time += 10;
+                if(time < 990) {
+                    time += 10;
+                }
+                if(!work) {
+                    current = 1000 * time * 60;
+                }
+                draw();
+            }
+        });
+
+        p5 = (Button)findViewById(R.id.p5);
+        p5.setOnClickListener( new View.OnClickListener() {
+
+            public void onClick(View v) {
+                if(time < 995) {
+                    time += 5;
+                }
+                if(!work) {
+                    current = 1000 * time * 60;
+                }
+                draw();
+            }
+        });
+
+        m5 = (Button)findViewById(R.id.m5);
+        m5.setOnClickListener( new View.OnClickListener() {
+
+            public void onClick(View v) {
+                if(time > 0) {
+                    time -= 5;
+                }
                 if(!work) {
                     current = 1000 * time * 60;
                 }
@@ -57,7 +83,7 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
         m10.setOnClickListener( new View.OnClickListener() {
 
             public void onClick(View v) {
-                if(time > 0) {
+                if(time > 5) {
                     time -= 10;
                 }
                 if(!work) {
@@ -73,44 +99,14 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
 
         // TTSのインスタンス生成
         tts = new TextToSpeech(this, this);
-        if(tts.setPitch(pitch) == TextToSpeech.ERROR) {
-            Log.e("TTS", "Ptich(" + pitch + ") set error.");
-        }
-        if(tts.setSpeechRate(rate) == TextToSpeech.ERROR) {
-            Log.e("TTS", "Speech rate(" + rate + ") set error.");
-        }
-     //   PowerManager pm = (PowerManager)getSystemService(this.POWER_SERVICE);
-     //   lock = pm.newWakeLock(PowerManager.ON_AFTER_RELEASE, "My tag");
-     //   lock.acquire();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         if(tts != null) {
-            // リソースを解放
             tts.shutdown();
         }
-     //   lock.release();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.count_down, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -119,7 +115,7 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
         if(v == startBtn) {
             if(time != 0) {
                 current = 1000 * time * 60;
-                this.speak("カウントダウンを開始します。残り"+ Long.toString(current / 1000 / 60) + "分です。");
+                this.speak("カウントダウンを開始します。残り"+ Long.toString(time) + "分です。");
                 if (cdt != null) {
                     cdt.cancel();
                 }
@@ -137,11 +133,9 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
         if(tts != null) {
 
             if(tts.isSpeaking()) {
-                // 読上げ中ならストップ
                 tts.stop();
             }
             work = true;
-            // テキスト読上げ
             tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
         }
     }
@@ -154,8 +148,8 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
 
             String buf = new String();
 
-            long min = current/1000/60;
-            long sec = current/1000%60;
+            long min = current / 1000 / 60;
+            long sec = current / 1000 % 60;
             if(min < 10) {
                 buf += "00" + Long.toString(min);
             } else if (min < 100) {
@@ -177,12 +171,12 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
 
     @Override
     public void onInit(int status) {
-        // TODO Auto-generated method stub
         if (status == TextToSpeech.SUCCESS) {
             Locale locale = Locale.JAPANESE;
             if (tts.isLanguageAvailable(locale) >= TextToSpeech.LANG_AVAILABLE) {
                 tts.setLanguage(locale);
             } else {
+                speak("Please download the TTS of Japanese.");
                 Log.e("TTS", "Not support locale.");
             }
         } else {
@@ -198,26 +192,23 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
 
         @Override
         public void onFinish() {
-            // カウントダウン完了後に呼ばれる
-
             current = 0;
             draw();
             work = false;
-
             speak("カウントダウンが終了しました。お疲れ様でした。");
-
         }
 
         @Override
         public void onTick(long millisUntilFinished) {
-            // インターバル(countDownInterval)毎に呼ばれる
             current = millisUntilFinished;
-
             Log.d("TTS", "onTick " + Long.toString(current));
-            if((current % (1000 * 60 * 10)) < 500) {
+            if((current % (1000 * 60 * 10)) < 400) {
                 speak("残り" + Long.toString(current / 1000 / 60) + "分です。");
             }
-            draw();
+
+            if(1000 * time * 60 + 1000 > current) {
+                draw();
+            }
         }
     }
 }

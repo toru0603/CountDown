@@ -202,7 +202,11 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
         public void onTick(long millisUntilFinished) {
             current = millisUntilFinished;
             Log.d("TTS", "onTick " + Long.toString(current));
-            if((current % (1000 * 60 * 10)) < 400) {
+
+            long min = current / 1000 / 60;
+            long sec = current / 1000 % 60;
+
+            if(sec == 0 && (min % 10) == 0) {
                 speak("残り" + Long.toString(current / 1000 / 60) + "分です。");
             }
 

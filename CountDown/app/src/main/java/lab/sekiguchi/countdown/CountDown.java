@@ -41,10 +41,10 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
         finishBtn.setOnClickListener( new View.OnClickListener() {
 
             public void onClick(View v) {
-                current = 0;
-                draw();
-                work = false;
-                speak("カウントダウンを終了します。お疲れ様でした。");
+                if (work) {
+                    finishCount();
+                    speak("カウントダウンを終了します。お疲れ様でした。");
+                }
             }
         });
 
@@ -125,7 +125,7 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
     public void onClick(View v) {
         Log.d("TTS", "onClick");
         if(v == startBtn) {
-            if(time != 0) {
+            if(time != 0 && !work) {
                 current = 1000 * time * 60;
                 orgTime = current;
                 this.speak("カウントダウンを開始します。残り"+ Long.toString(time) + "分です。");
@@ -148,7 +148,6 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
             if(tts.isSpeaking()) {
                 tts.stop();
             }
-            work = true;
             tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
         }
     }
@@ -182,6 +181,17 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
         }
     }
 
+    void finishCount() {
+        current = 0;
+        orgTime = 0;
+        if (cdt != null) {
+            cdt.cancel();
+        }
+        draw();
+        work = false;
+
+    }
+
     @Override
     public void onInit(int status) {
         if (status == TextToSpeech.SUCCESS) {
@@ -205,9 +215,7 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
 
         @Override
         public void onFinish() {
-            current = 0;
-            draw();
-            work = false;
+            finishCount();
             speak("カウントダウンが終了しました。お疲れ様でした。");
         }
 

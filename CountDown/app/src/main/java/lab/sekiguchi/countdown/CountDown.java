@@ -16,7 +16,7 @@ import android.view.Window;
 public class CountDown extends Activity implements View.OnClickListener, TextToSpeech.OnInitListener {
 
     private TextToSpeech tts;
-    private Button startBtn, p10, p5, m5, m10;
+    private Button startBtn, finishBtn, p10, p5, m5, m10;
 
     MyCountDownTimer cdt;
 
@@ -36,6 +36,17 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
 
         startBtn = (Button)findViewById(R.id.start);
         startBtn.setOnClickListener(this);
+
+        finishBtn = (Button)findViewById(R.id.finish);
+        finishBtn.setOnClickListener( new View.OnClickListener() {
+
+            public void onClick(View v) {
+                current = 0;
+                draw();
+                work = false;
+                speak("カウントダウンを終了します。お疲れ様でした。");
+            }
+        });
 
 
         p10 = (Button)findViewById(R.id.p10);

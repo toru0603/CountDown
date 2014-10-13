@@ -24,6 +24,7 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
     TextView timer;
 
     long time = 0;
+    long orgTime = 0;
     long current = 0;
     boolean work = false;
 
@@ -115,6 +116,7 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
         if(v == startBtn) {
             if(time != 0) {
                 current = 1000 * time * 60;
+                orgTime = current;
                 this.speak("カウントダウンを開始します。残り"+ Long.toString(time) + "分です。");
                 if (cdt != null) {
                     cdt.cancel();
@@ -205,12 +207,21 @@ public class CountDown extends Activity implements View.OnClickListener, TextToS
 
             long min = current / 1000 / 60;
             long sec = current / 1000 % 60;
+            long halfMin = orgTime / 2 / 1000 / 60;
+            long halfSec = orgTime / 2 / 1000 % 60;
 
-            if(sec == 0 && (min % 10) == 0) {
-                speak("残り" + Long.toString(current / 1000 / 60) + "分です。");
+            if(min == halfMin && sec == halfSec) {
+                if(sec == 0) {
+                    speak("残り" + min + "分です。");
+                } else {
+                    speak("残り" + min + "分" + sec + "秒です。");
+                }
+            } else
+            if(sec == 0 && min == 5) {
+                speak("残り" + Long.toString(min) + "分です。");
             }
 
-            if(1000 * time * 60 + 1000 > current) {
+            if(orgTime + 1000 > current) {
                 draw();
             }
         }
